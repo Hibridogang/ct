@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CT — PortaVicio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --black:  #0b0b0b;
+      --yellow: #FFD100;
+      --cyan:   #00D4E8;
+      --white:  #f0ede8;
+      --gray1:  #141414;
+      --gray2:  #1e1e1e;
+      --gray3:  #2a2a2a;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Barlow', sans-serif;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* custom cursor */
+    .cursor {
+      position: fixed; width: 12px; height: 12px;
+      background: var(--yellow); border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%,-50%);
+      transition: width 0.2s, height 0.2s, background 0.2s;
+    }
+    .cursor.grow { width: 36px; height: 36px; background: rgba(255,209,0,0.25); }
+
+    /* noise overlay */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.025; pointer-events: none; z-index: 1000;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.1rem 3rem;
+      background: rgba(11,11,11,0.85);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,209,0,0.12);
+    }
+    .nav-logo img { height: 44px; width: auto; display: block; }
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700; font-size: 0.8rem;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: rgba(240,237,232,0.55); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--yellow); }
+    .nav-pill {
+      background: var(--yellow); color: var(--black);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: 0.75rem;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      padding: 0.5rem 1.2rem; text-decoration: none;
+      transition: background 0.2s;
+    }
+    .nav-pill:hover { background: #ffe040; }
+
+    /* HERO */
+    #hero {
+      min-height: 100vh;
+      display: grid; grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 9rem 3rem 4rem;
+      gap: 3rem;
+      position: relative; overflow: hidden;
+    }
+    #hero::before {
+      content: '';
+      position: absolute;
+      top: -10%; right: -5%; width: 55%; height: 130%;
+      background: var(--gray1);
+      clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%);
+      z-index: 0;
+    }
+    .blob-y {
+      position: absolute; width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(255,209,0,0.07) 0%, transparent 70%);
+      top: 10%; left: 5%; pointer-events: none; z-index: 0;
+    }
+    .blob-c {
+      position: absolute; width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(0,212,232,0.08) 0%, transparent 70%);
+      bottom: 5%; right: 10%; pointer-events: none; z-index: 0;
+    }
+
+    .hero-left { position: relative; z-index: 2; }
+    .hero-kicker {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--cyan); margin-bottom: 1.4rem;
+    }
+    .hero-kicker::before {
+      content: ''; display: inline-block;
+      width: 28px; height: 2px; background: var(--cyan);
+    }
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(4.5rem, 8vw, 8rem);
+      line-height: 0.92; letter-spacing: 0.02em;
+      margin-bottom: 0.4rem;
+    }
+    .hero-title .stroke { -webkit-text-stroke: 2px var(--yellow); color: transparent; }
+    .hero-title .solid  { color: var(--white); }
+
+    .hero-slogan {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+      font-weight: 300; letter-spacing: 0.35em; text-transform: uppercase;
+      color: rgba(240,237,232,0.45); margin-bottom: 2.2rem;
+    }
+    .hero-slogan strong { color: var(--cyan); font-weight: 700; }
+
+    .hero-desc {
+      max-width: 420px; font-size: 1rem; line-height: 1.7;
+      color: rgba(240,237,232,0.55); margin-bottom: 2.5rem;
+    }
+
+    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-y {
+      background: var(--yellow); color: var(--black);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: 0.9rem;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      padding: 0.85rem 2rem; text-decoration: none; display: inline-block;
+      clip-path: polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-y:hover { background: #ffe84d; transform: translateY(-2px); }
+    .btn-c {
+      border: 2px solid var(--cyan); color: var(--cyan); background: transparent;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: 0.9rem;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      padding: 0.85rem 2rem; text-decoration: none; display: inline-block;
+      transition: background 0.2s, color 0.2s, transform 0.15s;
+    }
+    .btn-c:hover { background: var(--cyan); color: var(--black); transform: translateY(-2px); }
+
+    .hero-right {
+      position: relative; z-index: 2;
+      display: flex; justify-content: center; align-items: center;
+    }
+    .product-stage { position: relative; width: 100%; max-width: 480px; }
+    .product-stage .frame {
+      width: 100%; aspect-ratio: 4/5;
+      overflow: hidden; background: var(--gray2);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .product-stage .frame img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    .product-stage:hover .frame img { transform: scale(1.04); }
+    .brk { position: absolute; width: 22px; height: 22px; }
+    .brk.tl { top: -8px; left: -8px; border-top: 3px solid var(--yellow); border-left: 3px solid var(--yellow); }
+    .brk.tr { top: -8px; right: -8px; border-top: 3px solid var(--cyan); border-right: 3px solid var(--cyan); }
+    .brk.bl { bottom: -8px; left: -8px; border-bottom: 3px solid var(--yellow); border-left: 3px solid var(--yellow); }
+    .brk.br { bottom: -8px; right: -8px; border-bottom: 3px solid var(--cyan); border-right: 3px solid var(--cyan); }
+    .float-tag {
+      position: absolute; top: 1.5rem; right: -1rem;
+      background: var(--yellow); color: var(--black);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900; font-size: 0.7rem;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      padding: 0.35rem 0.8rem;
+      transform: rotate(90deg); transform-origin: right top;
+      white-space: nowrap;
+    }
+
+    /* BAND */
+    .band { overflow: hidden; padding: 0.9rem 0; background: var(--yellow); }
+    .band-inner {
+      display: flex; white-space: nowrap;
+      animation: slide 22s linear infinite;
+    }
+    .band-item {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem; letter-spacing: 0.1em;
+      color: var(--black); padding: 0 2rem;
+      display: flex; align-items: center; gap: 1.2rem;
+    }
+    .band-item::after { content: '✦'; font-size: 0.6rem; }
+    @keyframes slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* VICIOS */
+    #vicios { padding: 7rem 3rem; max-width: 1300px; margin: 0 auto; }
+    .section-eyebrow {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--cyan); margin-bottom: 0.7rem;
+    }
+    .section-heading {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.2rem, 4vw, 3.8rem);
+      letter-spacing: 0.04em; line-height: 1; margin-bottom: 3.5rem;
+    }
+    .section-heading .hl { color: var(--yellow); }
+
+    .vicios-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 2px; background: rgba(255,255,255,0.04);
+    }
+    .vicio-card {
+      background: var(--gray1); padding: 2.2rem 2rem;
+      position: relative; overflow: hidden; transition: background 0.3s;
+    }
+    .vicio-card:hover { background: var(--gray2); }
+    .vicio-card::before {
+      content: ''; position: absolute; left: 0; top: 0;
+      width: 3px; height: 0; background: var(--yellow);
+      transition: height 0.35s ease;
+    }
+    .vicio-card:hover::before { height: 100%; }
+    .vicio-num {
+      font-family: 'Bebas Neue', sans-serif; font-size: 3rem; line-height: 1;
+      color: rgba(255,209,0,0.1); margin-bottom: 0.3rem;
+    }
+    .vicio-icon { font-size: 1.8rem; margin-bottom: 0.8rem; display: block; }
+    .vicio-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700; font-size: 1.15rem;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--white); margin-bottom: 0.4rem;
+    }
+    .vicio-desc { font-size: 0.88rem; color: rgba(240,237,232,0.45); line-height: 1.6; }
+
+    /* PRODUCTO */
+    #producto { background: var(--gray1); padding: 7rem 3rem; }
+    .producto-inner {
+      max-width: 1300px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 6rem; align-items: center;
+    }
+    .img-duo {
+      display: grid; grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto; gap: 1rem;
+    }
+    .img-box {
+      overflow: hidden; background: var(--gray2);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .img-box img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.45s; }
+    .img-box:hover img { transform: scale(1.06); }
+    .img-box.tall { grid-row: span 2; aspect-ratio: 3/5; }
+    .img-box.wide { aspect-ratio: 4/3; }
+
+    .specs-list { list-style: none; margin-top: 2rem; }
+    .specs-list li {
+      display: grid; grid-template-columns: 16px 1fr;
+      gap: 0.8rem; align-items: start;
+      padding: 1.1rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .specs-list li:last-child { border: none; }
+    .spec-bullet { width: 8px; height: 8px; background: var(--cyan); border-radius: 50%; margin-top: 6px; }
+    .spec-t {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700; font-size: 1rem;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--white); display: block;
+    }
+    .spec-d { font-size: 0.87rem; color: rgba(240,237,232,0.45); display: block; margin-top: 0.1rem; }
+
+    /* CTA */
+    #contacto { padding: 9rem 3rem; text-align: center; position: relative; overflow: hidden; }
+    #contacto::before {
+      content: 'CT';
+      position: absolute; left: 50%; bottom: -4rem; transform: translateX(-50%);
+      font-family: 'Bebas Neue', sans-serif; font-size: 40vw; line-height: 1;
+      color: rgba(255,255,255,0.02); pointer-events: none; user-select: none;
+    }
+    .cta-kicker {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--cyan); margin-bottom: 1rem;
+    }
+    .cta-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3rem, 7vw, 7rem);
+      letter-spacing: 0.03em; line-height: 0.95; margin-bottom: 1.5rem;
+    }
+    .cta-title .hl { color: var(--yellow); }
+    .cta-sub {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.1rem; color: rgba(240,237,232,0.45);
+      margin-bottom: 2.5rem; letter-spacing: 0.05em;
+    }
+    .cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; z-index: 2; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 1.8rem 3rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer-logo img { height: 36px; width: auto; }
+    .footer-copy {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.8rem; letter-spacing: 0.1em;
+      color: rgba(240,237,232,0.25);
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .hero-kicker { animation: fadeUp 0.6s 0.1s both; }
+    .hero-title  { animation: fadeUp 0.6s 0.22s both; }
+    .hero-slogan { animation: fadeUp 0.6s 0.32s both; }
+    .hero-desc   { animation: fadeUp 0.6s 0.4s both; }
+    .hero-btns   { animation: fadeUp 0.6s 0.5s both; }
+    .hero-right  { animation: fadeUp 0.8s 0.25s both; }
+
+    /* RESPONSIVE */
+    @media (max-width: 960px) {
+      #hero { grid-template-columns: 1fr; padding: 7rem 1.5rem 4rem; }
+      #hero::before { display: none; }
+      .hero-right { margin-top: 2rem; }
+      .vicios-grid { grid-template-columns: 1fr 1fr; }
+      .vicio-card[style] { grid-column: span 2 !important; }
+      .producto-inner { grid-template-columns: 1fr; gap: 3rem; }
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { display: none; }
+      #vicios, #producto, #contacto { padding: 5rem 1.5rem; }
+      footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+    }
+    @media (max-width: 560px) {
+      .vicios-grid { grid-template-columns: 1fr; }
+      .vicio-card[style] { grid-column: span 1 !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cursor" id="cur"></div>
+<div class="blob-y"></div>
+<div class="blob-c"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><img src="logo.png" alt="CT Logo"/></div>
+  <ul class="nav-links">
+    <li><a href="#vicios">Qué lleva</a></li>
+    <li><a href="#producto">Producto</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+  </ul>
+  <a href="#contacto" class="nav-pill">Quiero uno</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-left">
+    <div class="hero-kicker">Proyecto Universitario · CT</div>
+    <h1 class="hero-title">
+      <span class="stroke">PORTA</span><br>
+      <span class="solid">VICIO</span>
+    </h1>
+    <p class="hero-slogan">Todo tu vicio, <strong>un solo lugar</strong></p>
+    <p class="hero-desc">
+      Cigarro, encendedor, vape, lata, parche de nicotina, tarjetas y llaves —
+      el CT PortaVicio reúne todo lo que siempre llevas suelto en un diseño
+      compacto fabricado en impresión 3D.
+    </p>
+    <div class="hero-btns">
+      <a href="#vicios" class="btn-y">Ver qué lleva</a>
+      <a href="#producto" class="btn-c">El producto</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="product-stage">
+      <div class="frame">
+        <img src="product3.png" alt="CT PortaVicio en uso"/>
+      </div>
+      <div class="brk tl"></div><div class="brk tr"></div>
+      <div class="brk bl"></div><div class="brk br"></div>
+      <div class="float-tag">PortaVicio</div>
+    </div>
+  </div>
+</section>
+
+<!-- BAND -->
+<div class="band">
+  <div class="band-inner">
+    <span class="band-item">Cigarro</span>
+    <span class="band-item">Encendedor</span>
+    <span class="band-item">Vape</span>
+    <span class="band-item">Lata de Bebida</span>
+    <span class="band-item">Parche de Nicotina</span>
+    <span class="band-item">Tarjetas</span>
+    <span class="band-item">Llaves</span>
+    <span class="band-item">Cigarro</span>
+    <span class="band-item">Encendedor</span>
+    <span class="band-item">Vape</span>
+    <span class="band-item">Lata de Bebida</span>
+    <span class="band-item">Parche de Nicotina</span>
+    <span class="band-item">Tarjetas</span>
+    <span class="band-item">Llaves</span>
+  </div>
+</div>
+
+<!-- VICIOS -->
+<section id="vicios">
+  <div class="section-eyebrow">¿Qué lleva?</div>
+  <h2 class="section-heading">7 vicios,<br><span class="hl">un solo objeto</span></h2>
+  <div class="vicios-grid">
+    <div class="vicio-card">
+      <div class="vicio-num">01</div>
+      <span class="vicio-icon">🚬</span>
+      <div class="vicio-name">Cigarro</div>
+      <p class="vicio-desc">Compartimento que protege tus cigarros sin que se rompan ni aplanen.</p>
+    </div>
+    <div class="vicio-card">
+      <div class="vicio-num">02</div>
+      <span class="vicio-icon">🔥</span>
+      <div class="vicio-name">Encendedor</div>
+      <p class="vicio-desc">Ranura lateral de acceso rápido. Siempre listo, nunca perdido.</p>
+    </div>
+    <div class="vicio-card">
+      <div class="vicio-num">03</div>
+      <span class="vicio-icon">💨</span>
+      <div class="vicio-name">Vape</div>
+      <p class="vicio-desc">Soporte ajustado para tu vape. Compatible con los formatos más comunes del mercado.</p>
+    </div>
+    <div class="vicio-card">
+      <div class="vicio-num">04</div>
+      <span class="vicio-icon">🥤</span>
+      <div class="vicio-name">Lata de Bebida</div>
+      <p class="vicio-desc">Agarre firme para latas estándar de 355ml o 473ml. Sin derrame, sin drama.</p>
+    </div>
+    <div class="vicio-card">
+      <div class="vicio-num">05</div>
+      <span class="vicio-icon">🩹</span>
+      <div class="vicio-name">Parche de Nicotina</div>
+      <p class="vicio-desc">Espacio plano y discreto para llevar tu parche siempre a mano.</p>
+    </div>
+    <div class="vicio-card">
+      <div class="vicio-num">06</div>
+      <span class="vicio-icon">💳</span>
+      <div class="vicio-name">Tarjetas</div>
+      <p class="vicio-desc">Slot para tarjetas de crédito, DNI o pases. Fino y seguro.</p>
+    </div>
+    <div class="vicio-card" style="grid-column: span 3;">
+      <div class="vicio-num">07</div>
+      <span class="vicio-icon">🔑</span>
+      <div class="vicio-name">Llaves</div>
+      <p class="vicio-desc">Anclaje para que tus llaves no anden sueltas en el fondo del bolsillo. Todo junto, todo organizado.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCTO DETAIL -->
+<section id="producto">
+  <div class="producto-inner">
+    <div class="img-duo">
+      <div class="img-box tall">
+        <img src="product2.png" alt="CT PortaVicio — vista del producto"/>
+      </div>
+      <div class="img-box wide">
+        <img src="product3.png" alt="CT PortaVicio en mano"/>
+      </div>
+      <div class="img-box wide">
+        <img src="logo.png" alt="CT Logo" style="object-fit:contain;background:#111;padding:1.5rem;"/>
+      </div>
+    </div>
+
+    <div class="detail-text">
+      <div class="section-eyebrow">Especificaciones</div>
+      <h2 class="section-heading">Hecho para <span class="hl">durar</span></h2>
+      <ul class="specs-list">
+        <li><span class="spec-bullet"></span><div><span class="spec-t">Material</span><span class="spec-d">PLA de alta resistencia — impresión 3D</span></div></li>
+        <li><span class="spec-bullet"></span><div><span class="spec-t">Compartimentos</span><span class="spec-d">7 espacios integrados en un cuerpo compacto</span></div></li>
+        <li><span class="spec-bullet"></span><div><span class="spec-t">Compatibilidad de lata</span><span class="spec-d">355ml y 473ml (estándar de mercado)</span></div></li>
+        <li><span class="spec-bullet"></span><div><span class="spec-t">Peso</span><span class="spec-d">Ultraligero — menos de 150g sin contenido</span></div></li>
+        <li><span class="spec-bullet"></span><div><span class="spec-t">Acabado</span><span class="spec-d">Negro mate · Personalizable por encargo</span></div></li>
+        <li><span class="spec-bullet"></span><div><span class="spec-t">Grip</span><span class="spec-d">Textura antideslizante en zona de agarre</span></div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="contacto">
+  <div class="cta-kicker">CT — Proyecto Universitario</div>
+  <h2 class="cta-title">¿TE INTERESA<br>EL <span class="hl">PORTAVICIO?</span></h2>
+  <p class="cta-sub">Contáctanos para más información sobre el producto</p>
+  <div class="cta-btns">
+    <a href="mailto:contacto@ct.com" class="btn-y">Escríbenos</a>
+    <a href="#vicios" class="btn-c">Ver funciones</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo"><img src="logo.png" alt="CT"/></div>
+  <div class="footer-copy">© 2025 CT — PortaVicio · Proyecto Universitario</div>
+</footer>
+
+<script>
+  const cur = document.getElementById('cur');
+  document.addEventListener('mousemove', e => {
+    cur.style.left = e.clientX + 'px';
+    cur.style.top  = e.clientY + 'px';
+  });
+  document.querySelectorAll('a, button, .vicio-card').forEach(el => {
+    el.addEventListener('mouseenter', () => cur.classList.add('grow'));
+    el.addEventListener('mouseleave', () => cur.classList.remove('grow'));
+  });
+</script>
+</body>
+</html>
